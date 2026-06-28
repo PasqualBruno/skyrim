@@ -5,7 +5,7 @@ import { Dashboard } from '../components/Dashboard';
 import { HistoryLog } from '../components/HistoryLog';
 import { AddMeritPanel } from '../components/AddMeritPanel';
 import { DataBackup } from '../components/DataBackup';
-import { Plus, Scroll, Database, Swords, User, Trash2, ShieldAlert } from 'lucide-react';
+import { Plus, Scroll, Database, Swords, User, Trash2, ShieldAlert, RotateCcw } from 'lucide-react';
 import { OrnamentalDivider } from '../components/OrnamentalDivider';
 
 const SKYRIM_RACES = [
@@ -15,13 +15,17 @@ const SKYRIM_RACES = [
 ];
 
 export const MainPage: React.FC = () => {
-  const { characters, currentCharacterId, addCharacter, deleteCharacter, setCurrentCharacter } = useCharacterStore();
+  const { characters, currentCharacterId, addCharacter, deleteCharacter, setCurrentCharacter, resetCharacterPoints } = useCharacterStore();
   
   // Right page view state for Desktop
   const [rightPageView, setRightPageView] = useState<'log' | 'new' | 'backup'>('log');
   
   // Mobile tab state
-  const [mobileView, setMobileView] = useState<'status' | 'diary' | 'new' | 'backup'>('status');
+  const [mobileView, setMobileView] = useState<'status' | 'diary' | 'character' | 'new' | 'backup'>('status');
+
+  // Reset character points modal state
+  const [isConfirmingReset, setIsConfirmingReset] = useState<string | null>(null);
+  const [resetConfirmName, setResetConfirmName] = useState('');
 
   // Character creation form modal state
   const [isCreatingChar, setIsCreatingChar] = useState(false);
@@ -114,7 +118,7 @@ export const MainPage: React.FC = () => {
             {hasCharacters ? (
               <>
                 {rightPageView === 'log' && <HistoryLog />}
-                {rightPageView === 'new' && <AddMeritPanel onSuccess={() => setRightPageView('log')} />}
+                {rightPageView === 'new' && <AddMeritPanel onBack={() => setRightPageView('log')} />}
                 {rightPageView === 'backup' && <DataBackup onSuccess={() => setRightPageView('log')} />}
               </>
             ) : (
@@ -242,75 +246,111 @@ export const MainPage: React.FC = () => {
 
       {/* MOBILE LAYOUT (Screens < md) */}
       <main className="flex md:hidden flex-col w-full max-w-md mx-auto text-skyrim-ink bg-skyrim-bg relative p-1 flex-grow justify-start">
-        {/* MOBILE PARCHMENT TOP PANEL FOR SWITCHING CHARACTERS */}
-        <header className="mb-3">
-          <div className="flex items-center justify-between gap-1.5 bg-[#ebdcb9] p-2 rounded border border-[#4a3f31] shadow-md">
-            <div className="flex-1 min-w-0">
-              {hasCharacters ? (
-                <select
-                  value={currentCharacterId || ''}
-                  onChange={(e) => {
-                    setCurrentCharacter(e.target.value);
-                    setMobileView('status'); // Auto-return to status when switching chars
-                  }}
-                  className="w-full bg-transparent text-xs font-bold font-cinzel text-[#2b2318] focus:outline-none font-black uppercase truncate"
-                >
-                  {characters.map(char => (
-                    <option key={char.id} value={char.id} className="bg-[#ebdcb9] text-[#2b2318]">
-                      {char.name} ({char.race})
-                    </option>
-                  ))}
-                </select>
-              ) : (
-                <span className="text-xs font-bold font-cinzel text-skyrim-ink/65 uppercase select-none">
-                  Sem Herói Ativo
-                </span>
-              )}
-            </div>
-
-            <div className="flex gap-1 flex-shrink-0">
-              {/* Add New Char button */}
-              <button
-                onClick={() => setIsCreatingChar(true)}
-                className="p-1.5 bg-[#2b2318] text-[#ebdcb9] hover:bg-[#3d3222] rounded transition-all shadow"
-                title="Criar novo personagem"
-              >
-                <Plus size={14} strokeWidth={2.5} />
-              </button>
-
-              {/* Trash current character */}
-              {hasCharacters && activeChar && (
-                <button
-                  onClick={() => setIsConfirmingDelete(activeChar.id)}
-                  className="p-1.5 bg-[#2b2318] text-skyrim-ink/50 hover:text-skyrim-crimson hover:bg-rose-950/20 rounded transition-all shadow"
-                  title="Excluir personagem ativo"
-                >
-                  <Trash2 size={14} />
-                </button>
-              )}
-
-              {/* Backup toggle */}
-              {hasCharacters && (
-                <button
-                  onClick={() => setMobileView('backup')}
-                  className={`p-1.5 rounded transition-all shadow ${mobileView === 'backup' ? 'bg-skyrim-gold text-[#0c0d0f]' : 'bg-[#2b2318] text-[#ebdcb9]'}`}
-                  title="Backup de pergaminho"
-                >
-                  <Database size={14} />
-                </button>
-              )}
-            </div>
-          </div>
-        </header>
-
         {/* PARCHMENT PAGE AREA */}
         <div className="parchment-paper flex-1 rounded p-4 shadow-lg min-h-[460px] flex flex-col justify-between">
           {hasCharacters ? (
             <>
               {mobileView === 'status' && <Dashboard />}
               {mobileView === 'diary' && <HistoryLog />}
-              {mobileView === 'new' && <AddMeritPanel onSuccess={() => setMobileView('diary')} />}
-              {mobileView === 'backup' && <DataBackup onSuccess={() => setMobileView('status')} />}
+              {mobileView === 'new' && <AddMeritPanel onBack={() => setMobileView('diary')} />}
+              {mobileView === 'character' && (
+                <div className="flex flex-col h-full text-skyrim-ink animate-fadeIn">
+                  <div className="text-center relative">
+                    <h2 className="font-cinzel text-base font-bold tracking-widest text-[#2b2318] uppercase">
+                      Salão dos Heróis
+                    </h2>
+                    <OrnamentalDivider light={true} />
+                  </div>
+
+                  <div className="mt-4 flex-1 overflow-y-auto skyrim-scrollbar pr-1 max-h-[300px] space-y-2">
+                    {characters.map((char) => {
+                      const isActive = char.id === currentCharacterId;
+                      return (
+                        <div
+                          key={char.id}
+                          className={`
+                            flex items-center justify-between p-3 rounded border transition-all duration-300
+                            ${isActive
+                              ? 'bg-[#ebdcb9] border-[#4a3f31] shadow-md animate-fadeIn'
+                              : 'bg-[#ebdcb9]/40 border-[#4a3f31]/20 hover:bg-[#e3d2ad]/60'
+                            }
+                          `}
+                        >
+                          <div 
+                            onClick={() => setCurrentCharacter(char.id)}
+                            className="flex-1 cursor-pointer"
+                          >
+                            <div className="font-cinzel font-bold text-sm text-[#2b2318] uppercase flex items-center gap-1.5">
+                              {char.name} 
+                              {isActive && (
+                                <span className="text-[9px] bg-skyrim-gold/30 text-skyrim-goldDark px-1.5 py-0.5 rounded font-black tracking-wider uppercase">
+                                  Ativo
+                                </span>
+                              )}
+                            </div>
+                            <div className="font-serif text-xs text-[#7d6f5c] mt-0.5">
+                              {char.race} • {char.class || 'Sem Classe'}
+                            </div>
+                          </div>
+
+                          <div className="flex items-center gap-2">
+                            {!isActive && (
+                              <button
+                                onClick={() => setCurrentCharacter(char.id)}
+                                className="px-2 py-1 bg-[#2b2318] text-[#ebdcb9] hover:bg-[#3d3222] rounded text-[10px] font-cinzel font-bold uppercase transition-all"
+                              >
+                                Ativar
+                              </button>
+                            )}
+                            <button
+                              onClick={() => {
+                                setIsConfirmingReset(char.id);
+                                setResetConfirmName('');
+                              }}
+                              className="p-1.5 bg-amber-950/15 text-skyrim-goldDark hover:bg-amber-900/30 rounded transition-all font-bold"
+                              title="Resetar pontos do personagem"
+                            >
+                              <RotateCcw size={13} />
+                            </button>
+                            <button
+                              onClick={() => setIsConfirmingDelete(char.id)}
+                              className="p-1.5 bg-rose-950/15 text-skyrim-crimson hover:bg-rose-900/30 rounded transition-all"
+                              title="Excluir personagem"
+                            >
+                              <Trash2 size={13} />
+                            </button>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+
+                  <div className="mt-4 pt-3 border-t border-[#4a3f31]/20 flex flex-col gap-2">
+                    <button
+                      onClick={() => setIsCreatingChar(true)}
+                      className="
+                        w-full py-2.5 bg-[#2b2318] hover:bg-[#3d3222] text-[#ebdcb9] font-cinzel font-bold tracking-widest
+                        rounded border border-[#4a3f31] shadow-md uppercase transition-all duration-300 text-xs flex items-center justify-center gap-1.5
+                      "
+                    >
+                      <Plus size={14} strokeWidth={2.5} />
+                      <span>Criar Novo Herói</span>
+                    </button>
+                    
+                    <button
+                      onClick={() => setMobileView('backup')}
+                      className="
+                        w-full py-2 bg-[#ebdcb9]/40 hover:bg-[#e3d2ad]/60 text-skyrim-ink font-cinzel font-bold tracking-wider
+                        rounded border border-[#4a3f31]/30 transition-all duration-300 text-xs flex items-center justify-center gap-1.5
+                      "
+                    >
+                      <Database size={14} />
+                      <span>Backup de Pergaminho</span>
+                    </button>
+                  </div>
+                </div>
+              )}
+              {mobileView === 'backup' && <DataBackup onSuccess={() => setMobileView('character')} />}
             </>
           ) : (
             /* MOBILE FIRST CHARACTER CREATION FLOW */
@@ -401,6 +441,14 @@ export const MainPage: React.FC = () => {
             >
               <Scroll size={18} />
               <span className="text-[9px] font-cinzel font-bold mt-0.5 tracking-widest uppercase">Diário</span>
+            </button>
+
+            <button
+              onClick={() => setMobileView('character')}
+              className={`flex flex-col items-center justify-center flex-1 py-1 transition-colors ${mobileView === 'character' ? 'text-skyrim-gold' : 'text-[#8fa2ad]/60 hover:text-white'}`}
+            >
+              <Swords size={18} />
+              <span className="text-[9px] font-cinzel font-bold mt-0.5 tracking-widest uppercase">Personagem</span>
             </button>
             
             <button
@@ -531,6 +579,71 @@ export const MainPage: React.FC = () => {
           </div>
         </div>
       )}
+
+      {/* MOBILE CONFIRM RESET POINTS MODAL OVERLAY */}
+      {isConfirmingReset && (() => {
+        const charToReset = characters.find(c => c.id === isConfirmingReset);
+        return (
+          <div className="fixed inset-0 bg-black/80 flex items-center justify-center p-4 z-50 animate-fadeIn">
+            <div className="bg-[#12141c] max-w-sm w-full rounded border-2 border-skyrim-gold p-6 text-center text-gray-200 shadow-2xl">
+              <div className="text-skyrim-gold flex justify-center mb-3">
+                <RotateCcw size={48} className="animate-spin-slow" />
+              </div>
+              <h3 className="font-cinzel text-lg font-bold tracking-wider mb-2 text-skyrim-gold">
+                RESETAR MÉRITOS DO HERÓI?
+              </h3>
+              <p className="text-sm text-gray-400 mb-4 leading-relaxed">
+                Esta ação é irreversível. Todos os méritos acumulados e perks resgatados de <strong className="text-white">"{charToReset?.name}"</strong> serão permanentemente apagados.
+              </p>
+              
+              <div className="mb-4 text-left">
+                <label className="block text-xs font-bold text-[#8fa2ad]/70 mb-1 font-cinzel uppercase">
+                  Digite o nome do herói para confirmar:
+                </label>
+                <div className="text-xs italic text-skyrim-goldDark mb-1 select-none font-bold font-cinzel">
+                  Nome esperado: {charToReset?.name}
+                </div>
+                <input
+                  type="text"
+                  placeholder="Nome do personagem..."
+                  value={resetConfirmName}
+                  onChange={(e) => setResetConfirmName(e.target.value)}
+                  className="w-full bg-[#1e2330] border border-gray-700 rounded px-3 py-2 text-sm text-white placeholder-gray-500 focus:outline-none focus:border-skyrim-gold"
+                />
+              </div>
+
+              <div className="flex gap-3 justify-center">
+                <button
+                  onClick={() => {
+                    setIsConfirmingReset(null);
+                    setResetConfirmName('');
+                  }}
+                  className="px-4 py-2 bg-gray-800 hover:bg-gray-700 text-gray-300 rounded text-sm font-bold transition-all font-cinzel tracking-wider"
+                >
+                  Cancelar
+                </button>
+                <button
+                  disabled={resetConfirmName !== charToReset?.name}
+                  onClick={() => {
+                    resetCharacterPoints(isConfirmingReset);
+                    setIsConfirmingReset(null);
+                    setResetConfirmName('');
+                    setMobileView('status');
+                  }}
+                  className={`px-4 py-2 rounded text-sm font-bold transition-all font-cinzel tracking-wider
+                    ${resetConfirmName === charToReset?.name
+                      ? 'bg-skyrim-gold text-[#0c0d0f] hover:bg-skyrim-goldLight shadow shadow-skyrim-gold'
+                      : 'bg-gray-800 text-gray-600 cursor-not-allowed border border-transparent'
+                    }
+                  `}
+                >
+                  Confirmar Reset
+                </button>
+              </div>
+            </div>
+          </div>
+        );
+      })()}
     </div>
   );
 };

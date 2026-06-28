@@ -113,3 +113,46 @@
     transform: translateY(0);
   }
 }
+
+/* Skyrim-inspired gain merit floating notification and button click ripple */
+@keyframes merit-ripple {
+  0% {
+    transform: scale(0.95);
+    box-shadow: 0 0 0 0 rgba(197, 155, 39, 0.7);
+  }
+  50% {
+    transform: scale(1.1);
+    box-shadow: 0 0 0 8px rgba(197, 155, 39, 0.3);
+  }
+  100% {
+    transform: scale(1);
+    box-shadow: 0 0 0 12px rgba(197, 155, 39, 0);
+  }
+}
+
+.active-merit-ripple:active {
+  animation: merit-ripple 0.3s ease-out;
+}
+
+@keyframes float-up-fade {
+  0% {
+    opacity: 0;
+    transform: translateY(10px) scale(0.9);
+  }
+  15% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+  85% {
+    opacity: 1;
+    transform: translateY(-25px) scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-40px) scale(0.85);
+  }
+}
+
+.animate-floatUpFade {
+  animation: float-up-fade 2s ease-out forwards;
+}

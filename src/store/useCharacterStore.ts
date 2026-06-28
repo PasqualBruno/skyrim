@@ -13,6 +13,7 @@ interface CharacterState {
   deleteLog: (logId: string) => void;
   redeemPerk: (characterId: string) => void;
   importData: (characters: Character[], logs: AchievementLog[], currentCharacterId: string | null) => void;
+  resetCharacterPoints: (characterId: string) => void;
 }
 
 export const useCharacterStore = create<CharacterState>()(
@@ -74,7 +75,7 @@ export const useCharacterStore = create<CharacterState>()(
 
         const charId = logToDelete.characterId;
         const remainingLogs = state.logs.filter((l) => l.id !== logId);
-        
+
         // Calculate new total merits for the affected character
         const newTotal = remainingLogs
           .filter(l => l.characterId === charId)
@@ -82,7 +83,7 @@ export const useCharacterStore = create<CharacterState>()(
 
         const updatedCharacters = state.characters.map((char) => {
           if (char.id === charId) {
-            // Deducted logs could make total merits drop, adjust redeemed perks if needed
+            // Deducted logs could make total merits drop, adjust redeemed perks if need
             const maxPerksPossible = Math.floor(Math.max(0, newTotal) / 10);
             return {
               ...char,
@@ -115,6 +116,23 @@ export const useCharacterStore = create<CharacterState>()(
         characters,
         logs,
         currentCharacterId,
+      }),
+
+      resetCharacterPoints: (characterId) => set((state) => {
+        const updatedCharacters = state.characters.map((char) => {
+          if (char.id === characterId) {
+            return {
+              ...char,
+              perksRedeemed: 0,
+            };
+          }
+          return char;
+        });
+        const remainingLogs = state.logs.filter((l) => l.characterId !== characterId);
+        return {
+          characters: updatedCharacters,
+          logs: remainingLogs,
+        };
       }),
     }),
     {

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useCharacterStore } from '../store/useCharacterStore';
-import { Plus, Trash2, ShieldAlert } from 'lucide-react';
+import { Plus, Trash2, ShieldAlert, RotateCcw } from 'lucide-react';
 
 const SKYRIM_RACES = [
   'Nord', 'Imperial', 'Breton', 'Redguard', 
@@ -9,9 +9,11 @@ const SKYRIM_RACES = [
 ];
 
 export const CharacterSelector: React.FC = () => {
-  const { characters, currentCharacterId, addCharacter, deleteCharacter, setCurrentCharacter } = useCharacterStore();
+  const { characters, currentCharacterId, addCharacter, deleteCharacter, setCurrentCharacter, resetCharacterPoints } = useCharacterStore();
   const [isCreating, setIsCreating] = useState(false);
   const [isConfirmingDelete, setIsConfirmingDelete] = useState<string | null>(null);
+  const [isConfirmingReset, setIsConfirmingReset] = useState<string | null>(null);
+  const [resetConfirmName, setResetConfirmName] = useState('');
 
   // Form State
   const [name, setName] = useState('');
@@ -142,10 +144,10 @@ export const CharacterSelector: React.FC = () => {
 
       {/* CONFIRM DELETE MODAL */}
       {isConfirmingDelete && (
-        <div className="fixed inset-0 bg-black/70 flex items-center justify-center p-4 z-50">
-          <div className="bg-[#12141c] max-w-sm w-full rounded border-2 border-red-800 p-6 text-center text-gray-200">
+        <div className="fixed inset-0 bg-black/70 flex items-center justify-center p-4 z-50 animate-fadeIn">
+          <div className="bg-[#12141c] max-w-sm w-full rounded border-2 border-red-800 p-6 text-center text-gray-200 shadow-2xl">
             <div className="text-red-600 flex justify-center mb-3">
-              <ShieldAlert size={48} />
+              <ShieldAlert size={48} className="animate-bounce" />
             </div>
             <h3 className="font-cinzel text-lg font-bold tracking-wider mb-2 text-red-500">
               DELETAR PERSONAGEM?
@@ -156,7 +158,7 @@ export const CharacterSelector: React.FC = () => {
             <div className="flex gap-3 justify-center">
               <button
                 onClick={() => setIsConfirmingDelete(null)}
-                className="px-4 py-2 bg-gray-800 hover:bg-gray-700 text-gray-300 rounded text-sm font-bold"
+                className="px-4 py-2 bg-gray-800 hover:bg-gray-700 text-gray-300 rounded text-sm font-bold transition-all"
               >
                 Cancelar
               </button>
@@ -165,7 +167,7 @@ export const CharacterSelector: React.FC = () => {
                   deleteCharacter(isConfirmingDelete);
                   setIsConfirmingDelete(null);
                 }}
-                className="px-4 py-2 bg-red-800 hover:bg-red-700 text-white rounded text-sm font-bold"
+                className="px-4 py-2 bg-red-800 hover:bg-red-700 text-white rounded text-sm font-bold transition-all"
               >
                 Deletar
               </button>
@@ -174,15 +176,92 @@ export const CharacterSelector: React.FC = () => {
         </div>
       )}
 
-      {/* TRASH TRIGGER FOR CURRENT ACTIVE CHARACTER */}
+      {/* CONFIRM RESET POINTS MODAL */}
+      {isConfirmingReset && (() => {
+        const charToReset = characters.find(c => c.id === isConfirmingReset);
+        return (
+          <div className="fixed inset-0 bg-black/80 flex items-center justify-center p-4 z-50 animate-fadeIn">
+            <div className="bg-[#12141c] max-w-sm w-full rounded border-2 border-skyrim-gold p-6 text-center text-gray-200 shadow-2xl">
+              <div className="text-skyrim-gold flex justify-center mb-3">
+                <RotateCcw size={48} className="animate-spin-slow" />
+              </div>
+              <h3 className="font-cinzel text-lg font-bold tracking-wider mb-2 text-skyrim-gold">
+                RESETAR MÉRITOS DO HERÓI?
+              </h3>
+              <p className="text-sm text-gray-400 mb-4 leading-relaxed">
+                Esta ação é irreversível. Todos os méritos acumulados e perks resgatados de <strong className="text-white">"{charToReset?.name}"</strong> serão permanentemente apagados.
+              </p>
+              
+              <div className="mb-4 text-left">
+                <label className="block text-xs font-bold text-[#8fa2ad]/70 mb-1 font-cinzel uppercase">
+                  Digite o nome do herói para confirmar:
+                </label>
+                <div className="text-xs italic text-skyrim-goldDark mb-1 select-none font-bold font-cinzel">
+                  Nome esperado: {charToReset?.name}
+                </div>
+                <input
+                  type="text"
+                  placeholder="Nome do personagem..."
+                  value={resetConfirmName}
+                  onChange={(e) => setResetConfirmName(e.target.value)}
+                  className="w-full bg-[#1e2330] border border-gray-700 rounded px-3 py-2 text-sm text-white placeholder-gray-500 focus:outline-none focus:border-skyrim-gold"
+                />
+              </div>
+
+              <div className="flex gap-3 justify-center">
+                <button
+                  onClick={() => {
+                    setIsConfirmingReset(null);
+                    setResetConfirmName('');
+                  }}
+                  className="px-4 py-2 bg-gray-800 hover:bg-gray-700 text-gray-300 rounded text-sm font-bold transition-all font-cinzel tracking-wider"
+                >
+                  Cancelar
+                </button>
+                <button
+                  disabled={resetConfirmName !== charToReset?.name}
+                  onClick={() => {
+                    resetCharacterPoints(isConfirmingReset);
+                    setIsConfirmingReset(null);
+                    setResetConfirmName('');
+                  }}
+                  className={`px-4 py-2 rounded text-sm font-bold transition-all font-cinzel tracking-wider
+                    ${resetConfirmName === charToReset?.name
+                      ? 'bg-skyrim-gold text-[#0c0d0f] hover:bg-skyrim-goldLight shadow shadow-skyrim-gold'
+                      : 'bg-gray-800 text-gray-600 cursor-not-allowed border border-transparent'
+                    }
+                  `}
+                >
+                  Confirmar Reset
+                </button>
+              </div>
+            </div>
+          </div>
+        );
+      })()}
+
+      {/* TRASH & RESET TRIGGER FOR CURRENT ACTIVE CHARACTER */}
       {activeCharacter && (
-        <button
-          onClick={() => setIsConfirmingDelete(activeCharacter.id)}
-          className="absolute -top-11 right-4 p-1.5 text-skyrim-ink/50 hover:text-skyrim-crimson transition-colors z-10"
-          title="Excluir personagem atual"
-        >
-          <Trash2 size={16} />
-        </button>
+        <div className="absolute -top-11 right-4 flex gap-1.5 z-10">
+          <button
+            onClick={() => {
+              setIsConfirmingReset(activeCharacter.id);
+              setResetConfirmName('');
+            }}
+            className="p-1.5 text-skyrim-ink/50 hover:text-skyrim-goldDark transition-colors"
+            title="Resetar pontos do personagem atual"
+          >
+            <RotateCcw size={16} />
+          </button>
+          
+          <button
+            onClick={() => setIsConfirmingDelete(activeCharacter.id)}
+            className="p-1.5 text-skyrim-ink/50 hover:text-skyrim-crimson transition-colors"
+            title="Excluir personagem atual"
+          >
+            <Trash2 size={16} />
+          </button>
+        </div>
       )}
     </div>
   );
