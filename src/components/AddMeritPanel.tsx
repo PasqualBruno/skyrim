@@ -86,10 +86,10 @@ export const AddMeritPanel: React.FC<AddMeritPanelProps> = ({ onBack }) => {
     if (!currentCharacterId) return;
     addLog(currentCharacterId, preset.text, category, preset.value);
     
-    // Spawn floating text at click location
+    // Spawn floating text centered horizontally
     const parent = document.getElementById('add-merit-panel-container');
     const parentRect = parent?.getBoundingClientRect();
-    const x = e.clientX - (parentRect?.left || 0);
+    const x = parentRect ? parentRect.width / 2 : 150;
     const y = e.clientY - (parentRect?.top || 0) - 15;
     
     const sign = preset.value >= 0 ? '+' : '';
@@ -140,7 +140,7 @@ export const AddMeritPanel: React.FC<AddMeritPanelProps> = ({ onBack }) => {
         <span
           key={ft.id}
           style={{ left: ft.x, top: ft.y }}
-          className="absolute z-50 pointer-events-none font-cinzel font-black text-xs text-skyrim-goldDark tracking-widest animate-floatUpFade drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]"
+          className="absolute z-50 pointer-events-none font-cinzel font-black text-xs text-skyrim-goldDark tracking-widest animate-floatUpFade drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)] -translate-x-1/2"
         >
           {ft.text}
         </span>
