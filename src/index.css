@@ -156,3 +156,20 @@
 .animate-floatUpFade {
   animation: float-up-fade 2s ease-out forwards;
 }
+
+/* Stable keyframes for pulsing button glow without layout translation (avoid bounce jumping) */
+@keyframes skyrim-btn-pulse {
+  0%, 100% {
+    box-shadow: 0 0 8px rgba(197, 155, 39, 0.4), 0 0 15px rgba(197, 155, 39, 0.2);
+    transform: scale(1);
+  }
+  50% {
+    box-shadow: 0 0 16px rgba(197, 155, 39, 0.8), 0 0 25px rgba(197, 155, 39, 0.4);
+    transform: scale(1.02);
+  }
+}
+
+.skyrim-btn-glow {
+  animation: skyrim-btn-pulse 2s infinite ease-in-out;
+}
+

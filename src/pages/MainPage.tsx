@@ -49,7 +49,7 @@ export const MainPage: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen py-4 md:py-10 px-2 md:px-4 flex flex-col justify-between items-center relative pb-20 md:pb-10">
+    <div className="h-dvh w-full overflow-hidden py-4 md:py-8 px-2 md:px-4 flex flex-col justify-between items-center relative pb-20 md:pb-10">
       
       {/* APP HEADER */}
       <header className="text-center select-none z-10 max-w-xl mb-4 w-full">
@@ -245,9 +245,9 @@ export const MainPage: React.FC = () => {
       </main>
 
       {/* MOBILE LAYOUT (Screens < md) */}
-      <main className="flex md:hidden flex-col w-full max-w-md mx-auto text-skyrim-ink bg-skyrim-bg relative p-1 flex-grow justify-start">
+      <main className="flex md:hidden flex-col w-full max-w-md mx-auto text-skyrim-ink bg-skyrim-bg relative p-1 flex-1 min-h-0 justify-start">
         {/* PARCHMENT PAGE AREA */}
-        <div className="parchment-paper flex-1 rounded p-4 shadow-lg min-h-[460px] flex flex-col justify-between">
+        <div className="parchment-paper flex-1 rounded p-4 shadow-lg min-h-0 h-full overflow-y-auto skyrim-scrollbar flex flex-col justify-between">
           {hasCharacters ? (
             <>
               {mobileView === 'status' && <Dashboard />}

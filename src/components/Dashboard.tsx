@@ -51,8 +51,7 @@ export const Dashboard: React.FC = () => {
   // Calculate merits needed for next perk
   const meritsNeeded = perkInfo.nextPerkCost - perkInfo.progressToNext;
 
-  // Last 3 achievements
-  const lastAchievements = charLogs.slice(0, 3);
+
 
   const handleRedeemPerk = () => {
     if (perkInfo.canRedeem) {
@@ -174,7 +173,7 @@ export const Dashboard: React.FC = () => {
             px-3 py-1.5 rounded font-cinzel text-xs font-bold tracking-widest uppercase transition-all duration-300
             flex items-center gap-1.5 shadow
             ${perkInfo.canRedeem 
-              ? 'bg-skyrim-gold hover:bg-skyrim-goldLight text-[#0c0d0f] animate-bounce hover:scale-105 border border-skyrim-goldDark shadow-skyrim-gold'
+              ? 'bg-skyrim-gold hover:bg-skyrim-goldLight text-[#0c0d0f] skyrim-btn-glow hover:scale-105 border border-skyrim-goldDark shadow-skyrim-gold'
               : 'bg-[#d8c8a4] text-skyrim-ink/40 border border-skyrim-ink/10 cursor-not-allowed'
             }
           `}
@@ -222,38 +221,7 @@ export const Dashboard: React.FC = () => {
         </div>
       </div>
 
-      {/* LAST ACHIEVEMENTS */}
-      <div className="mt-5 border-t border-[#4a3f31]/20 pt-4 flex-1 flex flex-col justify-end">
-        <h4 className="text-[10px] font-bold font-cinzel tracking-wider text-skyrim-ink/65 uppercase mb-2">
-          ÚLTIMAS CONQUISTAS
-        </h4>
-        <div className="space-y-1.5 flex-1 min-h-[70px]">
-          {lastAchievements.length === 0 ? (
-            <div className="text-xs font-serif italic text-skyrim-ink/50 py-2">
-              Nenhuma ação registrada neste livro ainda...
-            </div>
-          ) : (
-            lastAchievements.map((log) => {
-              const cat = CATEGORIES[log.category];
-              const isPositive = log.merits >= 0;
-              return (
-                <div key={log.id} className="text-xs flex items-start gap-1">
-                  <span className="text-xs mt-0.5 select-none text-skyrim-ink/60">✦</span>
-                  <div className="flex-1 font-serif text-[#3e3427] leading-snug">
-                    <span className="font-sans font-bold text-[10px] mr-1 select-none">
-                      [{cat?.emoji}]
-                    </span>
-                    {log.description}
-                    <span className={`ml-1.5 font-bold font-cinzel tracking-wider ${isPositive ? 'text-emerald-800' : 'text-rose-800'}`}>
-                      {isPositive ? `+${log.merits}` : log.merits}
-                    </span>
-                  </div>
-                </div>
-              );
-            })
-          )}
-        </div>
-      </div>
+
     </div>
   );
 };
